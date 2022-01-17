@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -59,7 +60,7 @@ func main() {
 }
 func Get(w http.ResponseWriter, r *http.Request) {
 	var c customer
-
+	w.Header().Set("Content-Type", "application/json")
 	q := r.URL.Query().Get("id")
 	row := db.QueryRow("SELECT * FROM customers WHERE ID = ?", q)
 
@@ -68,6 +69,7 @@ func Get(w http.ResponseWriter, r *http.Request) {
 		log.Println(err.Error())
 	}
 
-	log.Println(c)
+	res, err := json.Marshal(c)
+	w.Write(res)
 
 }
