@@ -50,7 +50,7 @@ func main() {
 
 	r := mux.NewRouter()
 
-	r.HandleFunc("/customers", Get).Methods(http.MethodGet)
+	r.HandleFunc("/customers/{id}", Get).Methods(http.MethodGet)
 
 	srv := &http.Server{
 		Handler:      r,
@@ -66,8 +66,10 @@ func Get(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	var c customer
 
-	q := r.URL.Query().Get("id")
-	row := db.QueryRow("SELECT * FROM customers WHERE ID = ?", q)
+	parameter := mux.Vars(r)
+	id := parameter["id"]
+
+	row := db.QueryRow("SELECT * FROM customers WHERE ID = ?", id)
 
 	err := row.Scan(&c.ID, &c.Name, &c.Address, &c.PhoneNo)
 	if err != nil {
