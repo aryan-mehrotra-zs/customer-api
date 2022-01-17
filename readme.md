@@ -10,10 +10,10 @@
 #### Create Table          
 ```
 CREATE TABLE table_name (
-    ID int NOT NULL,
-    Name varchar(255) NOT NULL,
-    PhoneNo int NOT NULL,
-    Address varchar(255) NOT NULL,
+    ID int NOT NULL AUTO_INCREMENT,,
+    name varchar(255) NOT NULL,
+    phone_no int NOT NULL,
+    address varchar(255) NOT NULL,
     PRIMARY KEY (ID)
 ); 
 ```

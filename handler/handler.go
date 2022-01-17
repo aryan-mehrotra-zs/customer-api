@@ -78,7 +78,8 @@ func Post(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Println(result.LastInsertId())
+	id, _ := result.LastInsertId()
+	log.Printf("customer added with id %v\n", id)
 
 	w.WriteHeader(http.StatusCreated)
 }
