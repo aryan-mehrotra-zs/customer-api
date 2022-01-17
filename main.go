@@ -3,7 +3,6 @@ package main
 import (
 	"database/sql"
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -21,9 +20,8 @@ type customer struct {
 }
 
 var db *sql.DB
-var err error
 
-func main() {
+func ConnectToSQL() *sql.DB {
 	cfg := mysql.Config{
 		User:   "root",
 		Passwd: "password",
@@ -31,18 +29,23 @@ func main() {
 		Addr:   "127.0.0.1:3306",
 		DBName: "organisation",
 	}
-	db, err = sql.Open("mysql", cfg.FormatDSN())
+	db, err := sql.Open("mysql", cfg.FormatDSN())
 
 	if err != nil {
 		log.Println(err)
 	}
 
-	pingErr := db.Ping()
-	if pingErr != nil {
-		log.Println(pingErr)
+	err = db.Ping()
+	if err != nil {
+		log.Println(err)
 	}
-	fmt.Println("Connected!")
+	log.Println("Connected!")
 
+	return db
+}
+
+func main() {
+	db = ConnectToSQL()
 	defer db.Close()
 
 	r := mux.NewRouter()
@@ -58,9 +61,11 @@ func main() {
 
 	log.Fatalln(srv.ListenAndServe())
 }
+
 func Get(w http.ResponseWriter, r *http.Request) {
-	var c customer
 	w.Header().Set("Content-Type", "application/json")
+	var c customer
+
 	q := r.URL.Query().Get("id")
 	row := db.QueryRow("SELECT * FROM customers WHERE ID = ?", q)
 
