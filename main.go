@@ -51,6 +51,7 @@ func main() {
 	r := mux.NewRouter()
 
 	r.HandleFunc("/customers/{id}", Get).Methods(http.MethodGet)
+	r.HandleFunc("/customers", Post).Methods(http.MethodPost)
 
 	srv := &http.Server{
 		Handler:      r,
@@ -64,19 +65,34 @@ func main() {
 
 func Get(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
+
 	var c customer
 
 	parameter := mux.Vars(r)
 	id := parameter["id"]
 
 	row := db.QueryRow("SELECT * FROM customers WHERE ID = ?", id)
-
 	err := row.Scan(&c.ID, &c.Name, &c.Address, &c.PhoneNo)
-	if err != nil {
-		log.Println(err.Error())
-	}
 
-	res, err := json.Marshal(c)
-	w.Write(res)
+	switch err {
+	case sql.ErrNoRows:
+		w.WriteHeader(http.StatusNotFound)
+
+	case nil:
+		res, err := json.Marshal(c)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+		w.Write(res)
+
+	default:
+		w.WriteHeader(http.StatusInternalServerError)
+	}
+}
+
+func Post(w http.ResponseWriter, r *http.Request) {
 
 }
