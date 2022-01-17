@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"encoding/json"
+	"io"
 	"log"
 	"net/http"
 	"time"
@@ -94,5 +95,38 @@ func Get(w http.ResponseWriter, r *http.Request) {
 }
 
 func Post(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	var c customer
+
+	body, err := io.ReadAll(r.Body)
+
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+
+		return
+	}
+
+	err = json.Unmarshal(body, &c)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+
+		return
+	}
+
+	result, err := db.Exec("INSERT INTO customers (ID,Name,Address,PhoneNo) VALUES (?,?,?,?)", c.ID, c.Name, c.Address, c.PhoneNo)
+
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+
+		return
+	}
+
+	log.Println(result.LastInsertId())
 
 }
+
+/*
+INSERT INTO customers (ID,Name,Address,PhoneNo) VALUES (1,"Aryan","Patna",9852902205);
+
+
+*/
