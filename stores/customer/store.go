@@ -25,13 +25,18 @@ func (s store) Get(id int) (model.Customer, error) {
 	return c, err
 }
 
-func (s store) Create(c model.Customer) (int64, error) {
+func (s store) Create(c model.Customer) (model.Customer, error) {
 	result, err := s.db.Exec("INSERT INTO customers (id,name,address,phone_no) VALUES (?,?,?,?)", c.ID, c.Name, c.Address, c.PhoneNo)
 	if err != nil {
-		return -1, err
+		return model.Customer{}, err
 	}
 
-	return result.LastInsertId()
+	data, err := result.LastInsertId()
+	if err != nil {
+		return model.Customer{}, err
+	}
+
+	return s.Get(int(data))
 }
 
 func (s store) Delete(id int) error {

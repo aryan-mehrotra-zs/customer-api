@@ -13,24 +13,21 @@ func New(store stores.Store) service {
 	return service{store: store}
 }
 
-func (s service) Get(id int) model.Customer {
-	c, _ := s.store.Get(id)
+func (s service) Get(id int) (model.Customer, error) {
 
 	// todo : how to handle error?
-	return c
+	return s.store.Get(id)
 }
 
-func (s service) Create(c model.Customer) int64 {
-	resp, _ := s.store.Create(c)
-
+func (s service) Create(c model.Customer) (model.Customer, error) {
 	//todo : call store get and check if correct values are inserted
-	return resp
+	return s.store.Create(c)
 }
 
-func (s service) Delete(id int) {
-	s.store.Delete(id)
+func (s service) Update(c model.Customer) error {
+	return s.store.Update(c)
 }
 
-func (s service) Update(c model.Customer) {
-	s.store.Update(c)
+func (s service) Delete(id int) error {
+	return s.store.Delete(id)
 }
