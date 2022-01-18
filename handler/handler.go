@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/gorilla/mux"
@@ -105,13 +106,16 @@ func DeleteByID(w http.ResponseWriter, r *http.Request) {
 func createPutQuery(id string, c model.Customer) string {
 	var q []string
 
-	switch {
-	case c.Name != "":
+	if c.Name != "" {
 		q = append(q, " name = \""+c.Name+"\"")
-	case c.Address != "":
+	}
+
+	if c.Address != "" {
 		q = append(q, " address = \""+c.Address+"\"")
-	case c.PhoneNo != 0:
-		q = append(q, " phone_no = "+string(c.PhoneNo))
+	}
+
+	if c.PhoneNo != 0 {
+		q = append(q, " phone_no = "+strconv.Itoa(c.PhoneNo))
 	}
 
 	if q == nil {
@@ -151,7 +155,7 @@ func UpdateByID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	_, err = db.Exec(query)
-	if err == nil {
+	if err != nil {
 		log.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
 
