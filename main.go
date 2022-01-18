@@ -16,7 +16,7 @@ func main() {
 	r.HandleFunc("/customers/{id}", handler.GetByID).Methods(http.MethodGet)
 	r.HandleFunc("/customers", handler.Post).Methods(http.MethodPost)
 	r.HandleFunc("/customers/{id}", handler.DeleteByID).Methods(http.MethodDelete)
-	r.HandleFunc("/customers/{id}", handler.Put).Methods(http.MethodPut)
+	r.HandleFunc("/customers/{id}", handler.UpdateByID).Methods(http.MethodPut)
 
 	srv := &http.Server{
 		Handler:      r,

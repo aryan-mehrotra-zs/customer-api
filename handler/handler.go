@@ -102,12 +102,30 @@ func DeleteByID(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func Put(w http.ResponseWriter, r *http.Request) {
+func createPutQuery(id string, c model.Customer) string {
+	var q []string
+
+	switch {
+	case c.Name != "":
+		q = append(q, " name = \""+c.Name+"\"")
+	case c.Address != "":
+		q = append(q, " address = \""+c.Address+"\"")
+	case c.PhoneNo != 0:
+		q = append(q, " phone_no = "+string(c.PhoneNo))
+	}
+
+	if q == nil {
+		return ""
+	}
+
+	query := "UPDATE customers SET" + strings.Join(q, ",") + " WHERE id=" + id + ";"
+
+	return query
+}
+
+func UpdateByID(w http.ResponseWriter, r *http.Request) {
 	db := driver.ConnectToSQL()
 	defer db.Close()
-
-	param := mux.Vars(r)
-	id := param["id"]
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -124,26 +142,21 @@ func Put(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	query := "UPDATE customers SET"
+	param := mux.Vars(r)
+	id := param["id"]
 
-	var q []string
-
-	if c.Name != "" {
-		q = append(q, " name = \""+c.Name+"\"")
-	}
-	if c.Address != "" {
-		q = append(q, " address = \""+c.Address+"\"")
-	}
-	if c.PhoneNo != 0 {
-		q = append(q, " phone_no = "+string(c.PhoneNo))
+	query := createPutQuery(id, c)
+	if query == "" {
+		return
 	}
 
-	if q == nil {
+	_, err = db.Exec(query)
+	if err == nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusInternalServerError)
 
 		return
 	}
 
-	query += strings.Join(q, ",")
-	query += " WHERE id=" + string(id) + ";"
-	db.Exec(query)
+	w.WriteHeader(http.StatusCreated)
 }
