@@ -25,6 +25,8 @@ func ConnectToSQL() *sql.DB {
 	err = db.Ping()
 	if err != nil {
 		log.Println(err)
+
+		return nil
 	}
 
 	log.Println("Connected!")

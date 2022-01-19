@@ -5,7 +5,7 @@
 #### Install Docker        `` sudo apt install docker``
 #### Download MySql Image  ``docker run  --name customer-api -e MYSQL_ROOT_PASSWORD=password -e MYSQL_DATABASE=organisation -p 3306:3306 -d mysql:latest``
 #### Here ,                ``Username: root Password: password Database: organisation``
-#### Execute Docker Image  ``docker exec -it sample-api mysql -u root -ppassword organisation``
+#### Execute Docker Image  ``docker exec -it customer-api mysql -u root -ppassword organisation``
 #### Switch to Database    ``USE organisation``
 #### Create Table          
 ```
