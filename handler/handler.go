@@ -44,7 +44,7 @@ func GetByID(w http.ResponseWriter, r *http.Request) {
 
 		_, err = w.Write(res)
 		if err != nil {
-			log.Println("error in writing response")
+			log.Println("error in writing resp")
 		}
 	default:
 		w.WriteHeader(http.StatusInternalServerError)
