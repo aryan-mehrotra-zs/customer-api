@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"bytes"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -13,7 +14,7 @@ import (
 func TestGetByID(t *testing.T) {
 	cases := []struct {
 		desc       string
-		id         string // input
+		id         string // body
 		resp       []byte
 		statusCode int
 	}{
@@ -40,6 +41,81 @@ func TestGetByID(t *testing.T) {
 
 		if !reflect.DeepEqual(body, tc.resp) {
 			t.Errorf("[TEST%d]Failed. Got %v\tExpected %v\n", i, string(body), string(tc.resp))
+		}
+	}
+}
+
+func TestCreate(t *testing.T) {
+	cases := []struct {
+		desc       string
+		body       []byte
+		statusCode int
+	}{
+		{"already exists parameter", []byte(`{"id":4,"name":"Umang","address":"India","phone_no":4}`), http.StatusInternalServerError},
+		{"create new customer", []byte(`{"name":"Umang","address":"India","phone_no":4}`), http.StatusCreated},
+	}
+
+	for i, tc := range cases {
+		r := httptest.NewRequest(http.MethodPost, "http://dummy", bytes.NewReader(tc.body))
+		w := httptest.NewRecorder()
+
+		Create(w, r)
+
+		resp := w.Result()
+
+		if resp.StatusCode != tc.statusCode {
+			t.Errorf("[TEST%d]Failed. Got %v\tExpected %v\n", i, resp.StatusCode, tc.statusCode)
+		}
+	}
+}
+
+func TestDeleteByID(t *testing.T) {
+	cases := []struct {
+		desc       string
+		id         string
+		statusCode int
+	}{
+		//{"id does not exist", "1", http.StatusInternalServerError},
+		{"deleted successfull", "3", http.StatusNoContent},
+	}
+
+	for i, tc := range cases {
+		req := httptest.NewRequest(http.MethodDelete, "http://dummy", http.NoBody)
+		r := mux.SetURLVars(req, map[string]string{"id": tc.id})
+		w := httptest.NewRecorder()
+
+		DeleteByID(w, r)
+
+		resp := w.Result()
+
+		if resp.StatusCode != tc.statusCode {
+			t.Errorf("[TEST%d]Failed. Got %v\tExpected %v\n", i, resp.StatusCode, tc.statusCode)
+		}
+
+	}
+}
+
+func TestUpdateByID(t *testing.T) {
+	cases := []struct {
+		desc       string
+		id         string
+		body       []byte
+		statusCode int
+	}{
+		{"Successfully updated", "4", []byte(`{"phone_no":5}`), http.StatusCreated},
+	}
+
+	for i, tc := range cases {
+		req := httptest.NewRequest(http.MethodPut, "http://dummy", bytes.NewReader(tc.body))
+		r := mux.SetURLVars(req, map[string]string{"id": tc.id})
+		w := httptest.NewRecorder()
+
+		UpdateByID(w, r)
+
+		resp := w.Result()
+
+		if resp.StatusCode != tc.statusCode {
+			t.Errorf("[TEST%d]Failed. Got %v\tExpected %v\n", i, resp.StatusCode, tc.statusCode)
 		}
 	}
 }
