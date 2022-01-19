@@ -29,8 +29,8 @@ func TestGetByID(t *testing.T) {
 		GetByID(w, r)
 
 		resp := w.Result()
-
 		body, err := io.ReadAll(resp.Body)
+
 		if err != nil {
 			t.Errorf("cannot read resp: %v", err)
 		}
@@ -75,7 +75,6 @@ func TestDeleteByID(t *testing.T) {
 		id         string
 		statusCode int
 	}{
-		//{"id does not exist", "1", http.StatusInternalServerError},
 		{"deleted successfull", "3", http.StatusNoContent},
 	}
 

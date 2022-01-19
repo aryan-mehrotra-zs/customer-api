@@ -65,6 +65,7 @@ func Create(w http.ResponseWriter, r *http.Request) {
 
 		return
 	}
+
 	err = json.Unmarshal(body, &c)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
