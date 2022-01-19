@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"log"
 	"net/http"
 	"time"
@@ -15,17 +16,22 @@ import (
 func main() {
 
 	db := driver.ConnectToSQL()
-	defer db.Close()
+	defer func(db *sql.DB) {
+		err := db.Close()
+		if err != nil {
+			return
+		}
+	}(db)
 
 	stores := store.New(db)
-	handler := handler.New(stores)
+	h := handler.New(stores)
 
 	r := mux.NewRouter()
 
-	r.HandleFunc("/customers/{id}", handler.GetByID).Methods(http.MethodGet)
-	r.HandleFunc("/customers", handler.Create).Methods(http.MethodPost)
-	r.HandleFunc("/customers/{id}", handler.DeleteByID).Methods(http.MethodDelete)
-	r.HandleFunc("/customers/{id}", handler.UpdateByID).Methods(http.MethodPut)
+	r.HandleFunc("/customers/{id}", h.GetByID).Methods(http.MethodGet)
+	r.HandleFunc("/customers", h.Create).Methods(http.MethodPost)
+	r.HandleFunc("/customers/{id}", h.DeleteByID).Methods(http.MethodDelete)
+	r.HandleFunc("/customers/{id}", h.UpdateByID).Methods(http.MethodPut)
 
 	srv := &http.Server{
 		Handler:      r,

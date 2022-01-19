@@ -9,6 +9,7 @@ type service struct {
 	store stores.Store
 }
 
+// New fixme why it is not being used
 func New(store stores.Store) service {
 	return service{store: store}
 }
