@@ -100,9 +100,10 @@ func TestUpdateByID(t *testing.T) {
 		desc       string
 		id         string
 		body       []byte
+		customer   []byte
 		statusCode int
 	}{
-		{"Successfully updated", "4", []byte(`{"phone_no":5}`), http.StatusCreated},
+		{"Successfully updated", "8", []byte(`{"phone_no":6}`), []byte(`{"id":8,"name":"Umang","address":"India","phone_no":6}`), http.StatusCreated},
 	}
 
 	for i, tc := range cases {
@@ -116,6 +117,15 @@ func TestUpdateByID(t *testing.T) {
 
 		if resp.StatusCode != tc.statusCode {
 			t.Errorf("[TEST%d]Failed. Got %v\tExpected %v\n", i, resp.StatusCode, tc.statusCode)
+		}
+
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			t.Errorf("cannot read resp: %v", err)
+		}
+
+		if !reflect.DeepEqual(body, tc.customer) {
+			t.Errorf("[TEST%d]Failed. Got %v\tExpected %v\n", i, string(body), string(tc.customer))
 		}
 	}
 }

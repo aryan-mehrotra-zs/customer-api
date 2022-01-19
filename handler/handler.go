@@ -160,6 +160,24 @@ func UpdateByID(w http.ResponseWriter, r *http.Request) {
 
 		return
 	}
-
 	w.WriteHeader(http.StatusCreated)
+
+	err = db.QueryRow("SELECT * FROM customers WHERE ID = ?", id).
+		Scan(&c.ID, &c.Name, &c.Address, &c.PhoneNo)
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound)
+	}
+
+	res, err := json.Marshal(c)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+
+		return
+	}
+
+	_, err = w.Write(res)
+	if err != nil {
+		log.Println("error in writing resp")
+	}
+
 }
