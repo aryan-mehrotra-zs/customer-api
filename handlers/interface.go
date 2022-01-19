@@ -1,8 +1,8 @@
-package handler
+package handlers
 
 import "net/http"
 
-type handler interface {
+type Handler interface {
 	GetByID(w http.ResponseWriter, r *http.Request)
 	Create(w http.ResponseWriter, r *http.Request)
 	DeleteByID(w http.ResponseWriter, r *http.Request)

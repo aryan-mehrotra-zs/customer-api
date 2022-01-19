@@ -8,7 +8,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/amehrotra/customer-api/driver"
-	handler "github.com/amehrotra/customer-api/handler/customer"
+	handler "github.com/amehrotra/customer-api/handlers/customer"
 	store "github.com/amehrotra/customer-api/stores/customer"
 )
 

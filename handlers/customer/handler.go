@@ -24,10 +24,13 @@ func New(service services.Service) handler {
 
 func (h handler) GetByID(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-
 	param := mux.Vars(r)
 	idParam := param["id"]
+
 	id, err := strconv.Atoi(idParam)
+	if err != nil {
+		return
+	}
 
 	data, err := h.service.Get(id)
 
@@ -85,7 +88,11 @@ func (h handler) Create(w http.ResponseWriter, r *http.Request) {
 func (h handler) DeleteByID(w http.ResponseWriter, r *http.Request) {
 	param := mux.Vars(r)
 	idParam := param["id"]
+
 	id, err := strconv.Atoi(idParam)
+	if err != nil {
+		return
+	}
 
 	err = h.service.Delete(id)
 	if err != nil {
@@ -116,7 +123,11 @@ func (h handler) UpdateByID(w http.ResponseWriter, r *http.Request) {
 
 	param := mux.Vars(r)
 	idParam := param["id"]
+
 	c.ID, err = strconv.Atoi(idParam)
+	if err != nil {
+		return
+	}
 
 	err = h.service.Update(c)
 	if err != nil {
