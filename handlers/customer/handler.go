@@ -2,11 +2,12 @@ package customer
 
 import (
 	"encoding/json"
-	"github.com/amehrotra/customer-api/errors"
 	"io"
 	"log"
 	"net/http"
 	"strconv"
+
+	"github.com/amehrotra/customer-api/errors"
 
 	"github.com/gorilla/mux"
 
@@ -48,7 +49,13 @@ func (h handler) Create(w http.ResponseWriter, r *http.Request) {
 	case errors.InvalidParam, errors.MissingParam:
 		w.WriteHeader(http.StatusBadRequest)
 	case nil:
+		resp, err := json.Marshal(customer)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+		}
+
 		w.WriteHeader(http.StatusCreated)
+		w.Write(resp)
 	default:
 		w.WriteHeader(http.StatusInternalServerError)
 	}
