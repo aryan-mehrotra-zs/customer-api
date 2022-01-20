@@ -75,7 +75,7 @@ func TestDeleteByID(t *testing.T) {
 		id         string
 		statusCode int
 	}{
-		{"deleted successfull", "3", http.StatusNoContent},
+		{"deleted successful", "3", http.StatusNoContent},
 	}
 
 	for i, tc := range cases {

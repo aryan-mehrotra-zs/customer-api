@@ -3,6 +3,7 @@ package handler
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -18,15 +19,20 @@ import (
 func GetByID(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	db := driver.ConnectToSQL()
+	db, err := driver.ConnectToSQL()
 	defer db.Close()
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+
+		return
+	}
 
 	param := mux.Vars(r)
 	id := param["id"]
 
 	var c model.Customer
 
-	err := db.QueryRow("SELECT * FROM customers WHERE ID = ?", id).
+	err = db.QueryRow("SELECT * FROM customers WHERE ID = ?", id).
 		Scan(&c.ID, &c.Name, &c.Address, &c.PhoneNo)
 
 	switch err {
@@ -54,8 +60,13 @@ func GetByID(w http.ResponseWriter, r *http.Request) {
 func Create(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	db := driver.ConnectToSQL()
+	db, err := driver.ConnectToSQL()
 	defer db.Close()
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+
+		return
+	}
 
 	var c model.Customer
 
@@ -73,27 +84,38 @@ func Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, err := db.Exec("INSERT INTO customers (id,name,address,phone_no) VALUES (?,?,?,?)", c.ID, c.Name, c.Address, c.PhoneNo)
+	res, err := db.Exec("INSERT INTO customers (id,name,address,phone_no) VALUES (?,?,?,?)", c.ID, c.Name, c.Address, c.PhoneNo)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 
 		return
 	}
 
-	id, _ := result.LastInsertId()
-	log.Printf("customer added with id %v\n", id)
+	id, err := res.LastInsertId()
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+
+		return
+	}
 
 	w.WriteHeader(http.StatusCreated)
+	w.Write([]byte(fmt.Sprintf("Customer with id : %v added to database", id)))
+
 }
 
 func DeleteByID(w http.ResponseWriter, r *http.Request) {
-	db := driver.ConnectToSQL()
+	db, err := driver.ConnectToSQL()
 	defer db.Close()
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+
+		return
+	}
 
 	param := mux.Vars(r)
 	id := param["id"]
 
-	_, err := db.Exec("DELETE FROM customers WHERE id = ?;", id)
+	_, err = db.Exec("DELETE FROM customers WHERE id = ?;", id)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 
@@ -103,33 +125,42 @@ func DeleteByID(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func createPutQuery(id string, c model.Customer) string {
+func createPutQuery(id string, c model.Customer) (string, []interface{}) {
 	var q []string
+	var args []interface{}
 
 	if c.Name != "" {
-		q = append(q, " name = \""+c.Name+"\"")
+		q = append(q, " name=?")
+		args = append(args, c.Name)
 	}
 
 	if c.Address != "" {
-		q = append(q, " address = \""+c.Address+"\"")
+		q = append(q, " address=?")
+		args = append(args, c.Address)
 	}
 
 	if c.PhoneNo != 0 {
-		q = append(q, " phone_no = "+strconv.Itoa(c.PhoneNo))
+		q = append(q, " phone_no=?")
+		args = append(args, strconv.Itoa(c.PhoneNo))
 	}
 
 	if q == nil {
-		return ""
+		return "", args
 	}
 
-	query := "UPDATE customers SET" + strings.Join(q, ",") + " WHERE id=" + id + ";"
-
-	return query
+	args = append(args, id)
+	query := "UPDATE customers SET" + strings.Join(q, ",") + " WHERE id = ?;"
+	return query, args
 }
 
 func UpdateByID(w http.ResponseWriter, r *http.Request) {
-	db := driver.ConnectToSQL()
+	db, err := driver.ConnectToSQL()
 	defer db.Close()
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+
+		return
+	}
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -149,24 +180,27 @@ func UpdateByID(w http.ResponseWriter, r *http.Request) {
 	param := mux.Vars(r)
 	id := param["id"]
 
-	query := createPutQuery(id, c)
+	query, args := createPutQuery(id, c)
 	if query == "" {
 		return
 	}
 
-	_, err = db.Exec(query)
+	_, err = db.Exec(query, args...)
 	if err != nil {
 		log.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
 
 		return
 	}
-	w.WriteHeader(http.StatusCreated)
+
+	w.WriteHeader(http.StatusOK)
 
 	err = db.QueryRow("SELECT * FROM customers WHERE ID = ?", id).
 		Scan(&c.ID, &c.Name, &c.Address, &c.PhoneNo)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
+
+		return
 	}
 
 	res, err := json.Marshal(c)
@@ -180,5 +214,4 @@ func UpdateByID(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Println("error in writing resp")
 	}
-
 }

@@ -8,7 +8,7 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 )
 
-func ConnectToSQL() *sql.DB {
+func ConnectToSQL() (*sql.DB, error) {
 	cfg := mysql.Config{
 		User:   "root",
 		Passwd: "password",
@@ -16,8 +16,8 @@ func ConnectToSQL() *sql.DB {
 		Addr:   "127.0.0.1:3306",
 		DBName: "organisation",
 	}
-	db, err := sql.Open("mysql", cfg.FormatDSN())
 
+	db, err := sql.Open("mysql", cfg.FormatDSN())
 	if err != nil {
 		log.Println(err)
 	}
@@ -29,5 +29,5 @@ func ConnectToSQL() *sql.DB {
 
 	log.Println("Connected!")
 
-	return db
+	return db, err
 }
