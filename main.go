@@ -8,14 +8,14 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/amehrotra/customer-api/driver"
+	"github.com/amehrotra/customer-api/drivers"
 	handler "github.com/amehrotra/customer-api/handlers/customer"
 	store "github.com/amehrotra/customer-api/stores/customer"
 )
 
 func main() {
 
-	db := driver.ConnectToSQL()
+	db := drivers.ConnectToSQL()
 	defer func(db *sql.DB) {
 		err := db.Close()
 		if err != nil {

@@ -1,10 +1,10 @@
 package services
 
-import "github.com/amehrotra/customer-api/model"
+import "github.com/amehrotra/customer-api/models"
 
 type Service interface {
-	Get(id int) (model.Customer, error)
-	Create(c model.Customer) (model.Customer, error)
-	Update(c model.Customer) error
+	Get(id int) (models.Customer, error)
+	Create(c models.Customer) (models.Customer, error)
+	Update(c models.Customer) error
 	Delete(id int) error
 }

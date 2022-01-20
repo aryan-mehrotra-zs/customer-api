@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/amehrotra/customer-api/model"
+	"github.com/amehrotra/customer-api/models"
 )
 
 type store struct {
@@ -16,8 +16,8 @@ func New(db *sql.DB) store {
 	return store{db: db}
 }
 
-func (s store) Get(id int) (model.Customer, error) {
-	var c model.Customer
+func (s store) Get(id int) (models.Customer, error) {
+	var c models.Customer
 
 	err := s.db.QueryRow("SELECT * FROM customers WHERE ID = ?", id).
 		Scan(&c.ID, &c.Name, &c.Address, &c.PhoneNo)
@@ -25,15 +25,15 @@ func (s store) Get(id int) (model.Customer, error) {
 	return c, err
 }
 
-func (s store) Create(c model.Customer) (model.Customer, error) {
+func (s store) Create(c models.Customer) (models.Customer, error) {
 	result, err := s.db.Exec("INSERT INTO customers (id,name,address,phone_no) VALUES (?,?,?,?)", c.ID, c.Name, c.Address, c.PhoneNo)
 	if err != nil {
-		return model.Customer{}, err
+		return models.Customer{}, err
 	}
 
 	data, err := result.LastInsertId()
 	if err != nil {
-		return model.Customer{}, err
+		return models.Customer{}, err
 	}
 
 	return s.Get(int(data))
@@ -45,7 +45,7 @@ func (s store) Delete(id int) error {
 	return err
 }
 
-func (s store) Update(c model.Customer) error {
+func (s store) Update(c models.Customer) error {
 	query := createPutQuery(c.ID, c)
 	if query == "" {
 		return nil
@@ -59,7 +59,7 @@ func (s store) Update(c model.Customer) error {
 	return nil
 }
 
-func createPutQuery(id int, c model.Customer) string {
+func createPutQuery(id int, c models.Customer) string {
 	var q []string
 
 	if c.Name != "" {

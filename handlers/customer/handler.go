@@ -1,8 +1,8 @@
 package customer
 
 import (
-	"database/sql"
 	"encoding/json"
+	"github.com/amehrotra/customer-api/errors"
 	"io"
 	"log"
 	"net/http"
@@ -10,7 +10,7 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/amehrotra/customer-api/model"
+	"github.com/amehrotra/customer-api/models"
 	"github.com/amehrotra/customer-api/services"
 )
 
@@ -22,20 +22,54 @@ func New(service services.Service) handler {
 	return handler{service: service}
 }
 
+func (h handler) Create(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	var customer models.Customer
+
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+
+		return
+	}
+
+	err = json.Unmarshal(body, &customer)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+
+		return
+	}
+
+	customer, err = h.service.Create(customer)
+	switch err.(type) {
+	case errors.EntityAlreadyExists:
+		w.WriteHeader(http.StatusOK)
+	case errors.InvalidParam, errors.MissingParam:
+		w.WriteHeader(http.StatusBadRequest)
+	case nil:
+		w.WriteHeader(http.StatusCreated)
+	default:
+		w.WriteHeader(http.StatusInternalServerError)
+	}
+}
+
 func (h handler) GetByID(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	param := mux.Vars(r)
 	idParam := param["id"]
 
 	id, err := strconv.Atoi(idParam)
-	if err != nil {
+	if err != nil || id <= 0 {
+		w.WriteHeader(http.StatusBadRequest)
+
 		return
 	}
 
 	data, err := h.service.Get(id)
 
-	switch err {
-	case sql.ErrNoRows:
+	switch err.(type) {
+	case errors.EntityNotFound:
 		w.WriteHeader(http.StatusNotFound)
 	case nil:
 		res, err := json.Marshal(data)
@@ -56,54 +90,6 @@ func (h handler) GetByID(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (h handler) Create(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
-	var c model.Customer
-
-	body, err := io.ReadAll(r.Body)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-
-		return
-	}
-
-	err = json.Unmarshal(body, &c)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-
-		return
-	}
-
-	c, err = h.service.Create(c)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-
-		return
-	}
-
-	w.WriteHeader(http.StatusCreated)
-}
-
-func (h handler) DeleteByID(w http.ResponseWriter, r *http.Request) {
-	param := mux.Vars(r)
-	idParam := param["id"]
-
-	id, err := strconv.Atoi(idParam)
-	if err != nil {
-		return
-	}
-
-	err = h.service.Delete(id)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-
-		return
-	}
-
-	w.WriteHeader(http.StatusNoContent)
-}
-
 func (h handler) UpdateByID(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -112,7 +98,7 @@ func (h handler) UpdateByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var c model.Customer
+	var c models.Customer
 
 	err = json.Unmarshal(body, &c)
 	if err != nil {
@@ -126,16 +112,39 @@ func (h handler) UpdateByID(w http.ResponseWriter, r *http.Request) {
 
 	c.ID, err = strconv.Atoi(idParam)
 	if err != nil {
-		return
+		w.WriteHeader(http.StatusBadRequest)
 	}
 
 	err = h.service.Update(c)
-	if err != nil {
-		log.Println(err)
+	switch err.(type) {
+	case errors.EntityNotFound:
+		w.WriteHeader(http.StatusNotFound)
+	case nil:
+		w.WriteHeader(http.StatusOK)
+	default:
 		w.WriteHeader(http.StatusInternalServerError)
+	}
+}
+
+func (h handler) DeleteByID(w http.ResponseWriter, r *http.Request) {
+	param := mux.Vars(r)
+	idParam := param["id"]
+
+	id, err := strconv.Atoi(idParam)
+	if err != nil || id <= 0 {
+		w.WriteHeader(http.StatusBadRequest)
 
 		return
 	}
 
-	w.WriteHeader(http.StatusCreated)
+	err = h.service.Delete(id)
+
+	switch err.(type) {
+	case errors.EntityNotFound:
+		w.WriteHeader(http.StatusNotFound)
+	case nil:
+		w.WriteHeader(http.StatusNoContent)
+	default:
+		w.WriteHeader(http.StatusInternalServerError)
+	}
 }
