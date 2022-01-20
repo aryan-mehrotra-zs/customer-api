@@ -29,8 +29,8 @@ func TestGetByID(t *testing.T) {
 		GetByID(w, r)
 
 		resp := w.Result()
-		body, err := io.ReadAll(resp.Body)
 
+		body, err := io.ReadAll(resp.Body)
 		if err != nil {
 			t.Errorf("cannot read resp: %v", err)
 		}
@@ -52,7 +52,7 @@ func TestCreate(t *testing.T) {
 		statusCode int
 	}{
 		{"already exists parameter", []byte(`{"id":4,"name":"Umang","address":"India","phone_no":4}`), http.StatusInternalServerError},
-		{"create new customer", []byte(`{"name":"Umang","address":"India","phone_no":4}`), http.StatusCreated},
+		{"create new resp", []byte(`{"name":"Umang","address":"India","phone_no":4}`), http.StatusCreated},
 	}
 
 	for i, tc := range cases {
@@ -90,19 +90,20 @@ func TestDeleteByID(t *testing.T) {
 		if resp.StatusCode != tc.statusCode {
 			t.Errorf("[TEST%d]Failed. Got %v\tExpected %v\n", i, resp.StatusCode, tc.statusCode)
 		}
-
 	}
 }
 
 func TestUpdateByID(t *testing.T) {
+
+	resp := []byte(`{"id":8,"name":"Umang","address":"India","phone_no":6}`)
 	cases := []struct {
 		desc       string
 		id         string
 		body       []byte
-		customer   []byte
+		resp       []byte
 		statusCode int
 	}{
-		{"Successfully updated", "8", []byte(`{"phone_no":6}`), []byte(`{"id":8,"name":"Umang","address":"India","phone_no":6}`), http.StatusCreated},
+		{"Successfully updated", "8", []byte(`{"phone_no":6}`), resp, http.StatusCreated},
 	}
 
 	for i, tc := range cases {
@@ -123,8 +124,8 @@ func TestUpdateByID(t *testing.T) {
 			t.Errorf("cannot read resp: %v", err)
 		}
 
-		if !reflect.DeepEqual(body, tc.customer) {
-			t.Errorf("[TEST%d]Failed. Got %v\tExpected %v\n", i, string(body), string(tc.customer))
+		if !reflect.DeepEqual(body, tc.resp) {
+			t.Errorf("[TEST%d]Failed. Got %v\tExpected %v\n", i, string(body), string(tc.resp))
 		}
 	}
 }

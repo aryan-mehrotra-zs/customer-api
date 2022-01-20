@@ -5,7 +5,6 @@ import (
 	"log"
 
 	"github.com/go-sql-driver/mysql"
-	_ "github.com/go-sql-driver/mysql"
 )
 
 func ConnectToSQL() (*sql.DB, error) {
@@ -19,15 +18,15 @@ func ConnectToSQL() (*sql.DB, error) {
 
 	db, err := sql.Open("mysql", cfg.FormatDSN())
 	if err != nil {
-		log.Println(err)
+		return nil, err
 	}
 
 	err = db.Ping()
 	if err != nil {
-		log.Println(err)
+		return nil, err
 	}
 
 	log.Println("Connected!")
 
-	return db, err
+	return db, nil
 }

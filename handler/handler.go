@@ -20,12 +20,13 @@ func GetByID(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	db, err := driver.ConnectToSQL()
-	defer db.Close()
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 
 		return
 	}
+
+	defer db.Close()
 
 	param := mux.Vars(r)
 	id := param["id"]
@@ -61,12 +62,13 @@ func Create(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	db, err := driver.ConnectToSQL()
-	defer db.Close()
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 
 		return
 	}
+
+	defer db.Close()
 
 	var c model.Customer
 
@@ -99,18 +101,24 @@ func Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusCreated)
-	w.Write([]byte(fmt.Sprintf("Customer with id : %v added to database", id)))
 
+	_, err = w.Write([]byte(fmt.Sprintf("Customer with id : %v added to database", id)))
+	if err != nil {
+		log.Println("Error in writing response")
+
+		return
+	}
 }
 
 func DeleteByID(w http.ResponseWriter, r *http.Request) {
 	db, err := driver.ConnectToSQL()
-	defer db.Close()
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 
 		return
 	}
+
+	defer db.Close()
 
 	param := mux.Vars(r)
 	id := param["id"]
@@ -126,8 +134,8 @@ func DeleteByID(w http.ResponseWriter, r *http.Request) {
 }
 
 func createPutQuery(id string, c model.Customer) (string, []interface{}) {
-	var q []string
-	var args []interface{}
+	q := make([]string, 0, 3)
+	args := make([]interface{}, 0, 4)
 
 	if c.Name != "" {
 		q = append(q, " name=?")
@@ -155,12 +163,13 @@ func createPutQuery(id string, c model.Customer) (string, []interface{}) {
 
 func UpdateByID(w http.ResponseWriter, r *http.Request) {
 	db, err := driver.ConnectToSQL()
-	defer db.Close()
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 
 		return
 	}
+
+	defer db.Close()
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
