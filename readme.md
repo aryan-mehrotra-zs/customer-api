@@ -1,46 +1,30 @@
-#Customer-api
+# customer-api
+This project allows to perform crud operations.
 
-## Setup Docker
-###Linux
-#### Install Docker        `` sudo apt install docker``
-#### Download MySql Image  ``docker run  --name customer-api -e MYSQL_ROOT_PASSWORD=password -e MYSQL_DATABASE=organisation -p 3306:3306 -d mysql:latest``
-#### Here ,                ``Username: root Password: password Database: organisation``
-#### Execute Docker Image  ``docker exec -it sample-api mysql -u root -ppassword organisation``
-#### Switch to Database    ``USE organisation``
-#### Create Table          
+## Steps to setup server
+
+### To setup database container
+```azure
+docker run  --name customer-api -e MYSQL_ROOT_PASSWORD=password -e MYSQL_DATABASE=organisation -p 3306:3306 -d mysql:latest
 ```
-CREATE TABLE table_name (
-    ID int NOT NULL AUTO_INCREMENT,,
-    name varchar(255) NOT NULL,
-    phone_no int NOT NULL,
-    address varchar(255) NOT NULL,
-    PRIMARY KEY (ID)
-); 
+```azure
+docker exec -it sample-api mysql -u root -ppassword organisation
 ```
 
+### MySQL Commands
 
+```azure
+use organisation
 
+CREATE TABLE customers (
+                            ID int NOT NULL AUTO_INCREMENT,,
+                            name varchar(255) NOT NULL,
+                            phone_no int NOT NULL,
+                            address varchar(255) NOT NULL,
+                            PRIMARY KEY (ID)
+);
+```
 
+### To start the server
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#### Remove Sudo (Optional) ``sudo setfacl -m user:$USER:rw /var/run/docker.sock``
-
-
+`go run main.go`
