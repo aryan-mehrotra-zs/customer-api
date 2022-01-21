@@ -66,7 +66,7 @@ func (m mockService) Delete(id int) error {
 type mockReader struct{}
 
 func (m mockReader) Read(p []byte) (n int, err error) {
-	return 0, errors.InvalidParam{}
+	return 0, errors.Error("body read error")
 }
 
 type mockResponseWriter struct {
