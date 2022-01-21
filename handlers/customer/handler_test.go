@@ -3,11 +3,9 @@ package customer
 import (
 	"bytes"
 	"io"
-	"log"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
-	"strings"
 	"testing"
 
 	"github.com/gorilla/mux"
@@ -155,33 +153,6 @@ func TestHandler_DeleteByID(t *testing.T) {
 		if resp.StatusCode != tc.statusCode {
 			t.Errorf("\n[TEST %d] Failed. Desc : %v\nGot %v\nExpected %v", i, tc.desc, resp.StatusCode, tc.statusCode)
 		}
-	}
-}
-
-func TestHandler_writeResponseMarshalError(t *testing.T) {
-	data := make(chan int)
-	w := httptest.NewRecorder()
-	expectedStatusCode := http.StatusInternalServerError
-
-	writeResponseBody(w, data)
-
-	resp := w.Result()
-	if resp.StatusCode != expectedStatusCode {
-		t.Errorf("\n[TEST] Failed. Desc : Marshal Error \nGot %v\nExpected %v", resp.StatusCode, http.StatusInternalServerError)
-	}
-}
-
-func TestHandler_writeResponseWriteError(t *testing.T) {
-	data := []byte(`{"id":1,"name":"Aryan","address":"Patna","phone_no":1}`)
-	w := mockResponseWriter{}
-
-	var b bytes.Buffer
-	log.SetOutput(&b)
-
-	writeResponseBody(w, data)
-
-	if !strings.Contains(b.String(), "error in writing response") {
-		t.Errorf("\n[TEST] Failed. Desc : Write Error \nGot %v\nExpected 'error in writing response' in logs", b.String())
 	}
 }
 

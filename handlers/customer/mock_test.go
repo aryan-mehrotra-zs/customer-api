@@ -1,7 +1,6 @@
 package customer
 
 import (
-	goErr "errors"
 	"net/http"
 	"strconv"
 
@@ -21,7 +20,7 @@ func (m mockService) Get(id int) (models.Customer, error) {
 	case "3":
 		return models.Customer{}, errors.EntityNotFound{}
 	case "4":
-		return models.Customer{}, goErr.New("some error")
+		return models.Customer{}, errors.Error("some error")
 	}
 
 	return models.Customer{}, nil
@@ -37,7 +36,7 @@ func (m mockService) Create(c models.Customer) (models.Customer, error) {
 	case "Ruchit":
 		return models.Customer{}, errors.MissingParam{}
 	case "Aakanksha":
-		return models.Customer{}, goErr.New("some error")
+		return models.Customer{}, errors.Error("some error")
 	default:
 		return models.Customer{}, nil
 	}
@@ -51,7 +50,7 @@ func (m mockService) Update(c models.Customer) (models.Customer, error) {
 	case "Aryan":
 		return models.Customer{}, errors.EntityNotFound{}
 	default:
-		return models.Customer{}, goErr.New("some error")
+		return models.Customer{}, errors.Error("some error")
 
 	}
 }
@@ -62,7 +61,7 @@ func (m mockService) Delete(id int) error {
 	case 10:
 		return errors.EntityNotFound{}
 	default:
-		return goErr.New("some error")
+		return errors.Error("some error")
 	}
 }
 
@@ -80,7 +79,7 @@ func (m mockResponseWriter) Header() http.Header {
 }
 
 func (m mockResponseWriter) Write([]byte) (int, error) {
-	return 0, goErr.New("some error")
+	return 0, errors.Error("some error")
 }
 
 func (m mockResponseWriter) WriteHeader(statusCode int) {

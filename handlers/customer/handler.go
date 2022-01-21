@@ -23,81 +23,93 @@ func New(service services.Customer) handler {
 }
 
 func (h handler) Create(w http.ResponseWriter, r *http.Request) {
-	var customer models.Customer
-
-	body, err := io.ReadAll(r.Body)
+	customer, err := getCustomer(r)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		setStatusCode(w, r.Method, nil, err)
 
 		return
 	}
 
-	err = json.Unmarshal(body, &customer)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+	res, err := h.service.Create(customer)
 
-		return
-	}
-
-	setStatusCode(w, err, r.Method, customer)
+	setStatusCode(w, r.Method, res, err)
 }
 
 func (h handler) GetByID(w http.ResponseWriter, r *http.Request) {
 	id, err := getID(r)
 	if err != nil {
-		setStatusCode(w, err, r.Method, nil)
+		setStatusCode(w, r.Method, nil, err)
 
 		return
 	}
 
 	customer, err := h.service.Get(id)
 
-	setStatusCode(w, err, r.Method, customer)
+	setStatusCode(w, r.Method, customer, err)
 }
 
 func (h handler) UpdateByID(w http.ResponseWriter, r *http.Request) {
-	body, err := io.ReadAll(r.Body)
+	customer, err := getCustomer(r)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-
-		return
-	}
-
-	var customer models.Customer
-
-	err = json.Unmarshal(body, &customer)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		setStatusCode(w, r.Method, nil, err)
 
 		return
 	}
 
 	customer.ID, err = getID(r)
 	if err != nil {
-		setStatusCode(w, err, r.Method, nil)
+		setStatusCode(w, r.Method, nil, err)
 
 		return
 	}
 
-	customer, err = h.service.Update(customer)
+	res, err := h.service.Update(customer)
 
-	setStatusCode(w, err, r.Method, customer)
+	setStatusCode(w, r.Method, res, err)
 }
 
 func (h handler) DeleteByID(w http.ResponseWriter, r *http.Request) {
 	id, err := getID(r)
 	if err != nil {
-		setStatusCode(w, err, r.Method, nil)
+		setStatusCode(w, r.Method, nil, err)
 
 		return
 	}
 
 	err = h.service.Delete(id)
 
-	setStatusCode(w, err, r.Method, nil)
+	setStatusCode(w, r.Method, nil, err)
 }
 
-func setStatusCode(w http.ResponseWriter, err error, method string, data interface{}) {
+func getID(r *http.Request) (int, error) {
+	param := mux.Vars(r)
+	idParam := param["id"]
+
+	id, err := strconv.Atoi(idParam)
+	if err != nil || id <= 0 {
+		return 0, errors.InvalidParam{Param: []string{"id"}}
+	}
+
+	return id, nil
+}
+
+func getCustomer(r *http.Request) (models.Customer, error) {
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		return models.Customer{}, errors.Error("bind error")
+	}
+
+	var customer models.Customer
+
+	err = json.Unmarshal(body, &customer)
+	if err != nil {
+		return models.Customer{}, errors.InvalidParam{Param: []string{"body"}}
+	}
+
+	return customer, nil
+}
+
+func setStatusCode(w http.ResponseWriter, method string, data interface{}, err error) {
 	switch err.(type) {
 	case errors.EntityAlreadyExists:
 		w.WriteHeader(http.StatusOK)
@@ -113,8 +125,6 @@ func setStatusCode(w http.ResponseWriter, err error, method string, data interfa
 }
 
 func writeSuccessResponse(w http.ResponseWriter, method string, data interface{}) {
-	w.Header().Set("Content-Type", "application/json")
-
 	switch method {
 	case http.MethodPost:
 		writeResponseBody(w, http.StatusCreated, data)
@@ -126,6 +136,8 @@ func writeSuccessResponse(w http.ResponseWriter, method string, data interface{}
 }
 
 func writeResponseBody(w http.ResponseWriter, statusCode int, data interface{}) {
+	w.Header().Set("Content-Type", "application/json")
+
 	res, err := json.Marshal(data)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -139,16 +151,4 @@ func writeResponseBody(w http.ResponseWriter, statusCode int, data interface{}) 
 	if err != nil {
 		log.Printf("error in writing response %v", err)
 	}
-}
-
-func getID(r *http.Request) (int, error) {
-	param := mux.Vars(r)
-	idParam := param["id"]
-
-	id, err := strconv.Atoi(idParam)
-	if err != nil || id <= 0 {
-		return 0, errors.InvalidParam{Param: []string{"id"}}
-	}
-
-	return id, nil
 }
