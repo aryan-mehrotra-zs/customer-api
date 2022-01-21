@@ -75,7 +75,9 @@ type mockResponseWriter struct {
 }
 
 func (m mockResponseWriter) Header() http.Header {
-	return nil
+	header := make(map[string][]string)
+
+	return header
 }
 
 func (m mockResponseWriter) Write([]byte) (int, error) {
