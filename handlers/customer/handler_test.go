@@ -3,9 +3,12 @@ package customer
 import (
 	"bytes"
 	"io"
+	"log"
+	"math"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/gorilla/mux"
@@ -86,28 +89,6 @@ func TestHandler_GetByID(t *testing.T) {
 	}
 }
 
-func TestHandler_writeResponse(t *testing.T) {
-	cases := []struct {
-		desc       string
-		data       interface{}
-		w          http.ResponseWriter
-		statusCode int
-	}{
-		{"marshal error", make(chan int), httptest.NewRecorder(), http.StatusInternalServerError},
-		{"response writer error", []byte(`{"id":1,"name":"Aryan","address":"Patna","phone_no":1}`), mockResponseWriter{}, 0},
-	}
-
-	for i, tc := range cases {
-		writeResponse(tc.w, tc.data)
-
-		if w, ok := tc.w.(*httptest.ResponseRecorder); ok {
-			resp := w.Result()
-			if resp.StatusCode != tc.statusCode {
-				t.Errorf("\n[TEST %v] Failed. Desc : %v\nGot %v\nExpected %v", i, tc.desc, resp.StatusCode, tc.statusCode)
-			}
-		}
-	}
-}
 func TestHandler_UpdateByID(t *testing.T) {
 	h := New(mockService{})
 
@@ -181,5 +162,54 @@ func TestHandler_DeleteByID(t *testing.T) {
 		if resp.StatusCode != tc.statusCode {
 			t.Errorf("\n[TEST %d] Failed. Desc : %v\nGot %v\nExpected %v", i, tc.desc, resp.StatusCode, tc.statusCode)
 		}
+	}
+}
+
+func TestHandler_writeResponse(t *testing.T) {
+	cases := []struct {
+		desc       string
+		data       interface{}
+		w          http.ResponseWriter
+		statusCode int
+	}{
+		{"marshal error", make(chan int), httptest.NewRecorder(), http.StatusInternalServerError},
+		{"response writer error", []byte(`{"id":1,"name":"Aryan","address":"Patna","phone_no":1}`), mockResponseWriter{}, 0},
+	}
+
+	for i, tc := range cases {
+		writeResponse(tc.w, tc.data)
+
+		if w, ok := tc.w.(*httptest.ResponseRecorder); ok {
+			resp := w.Result()
+			if resp.StatusCode != tc.statusCode {
+				t.Errorf("\n[TEST %v] Failed. Desc : %v\nGot %v\nExpected %v", i, tc.desc, resp.StatusCode, tc.statusCode)
+			}
+		}
+	}
+}
+
+func TestHandler_writeResponseMarshalError(t *testing.T) {
+	data := math.Inf(1)
+	w := httptest.NewRecorder()
+	statusCode := http.StatusInternalServerError
+
+	writeResponse(w, data)
+
+	if w.Result().StatusCode != statusCode {
+		t.Errorf("\n[TEST] Failed. Desc : Marshal Error \nGot %v\nExpected %v", w.Result().StatusCode, statusCode)
+	}
+}
+
+func TestHandler_writeResponseWriteError(t *testing.T) {
+	data := []byte(`{"id":1,"name":"Aryan","address":"Patna","phone_no":1}`)
+	w := mockResponseWriter{}
+
+	var b bytes.Buffer
+	log.SetOutput(&b)
+
+	writeResponse(w, data)
+
+	if !strings.Contains(b.String(), "error in writing response") {
+		t.Errorf("\n[TEST] Failed. Desc : Write Error\nGot %v\nExpected : error in writing response", b.String())
 	}
 }

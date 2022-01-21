@@ -81,7 +81,7 @@ func writeResponse(w http.ResponseWriter, data interface{}) {
 
 	_, err = w.Write(res)
 	if err != nil {
-		log.Println(err)
+		log.Println("error in writing response")
 	}
 }
 
