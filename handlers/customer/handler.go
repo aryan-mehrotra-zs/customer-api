@@ -3,7 +3,6 @@ package customer
 import (
 	"encoding/json"
 	"io"
-	"log"
 	"net/http"
 	"strconv"
 
@@ -55,14 +54,37 @@ func (h handler) Create(w http.ResponseWriter, r *http.Request) {
 		}
 
 		w.WriteHeader(http.StatusCreated)
-		w.Write(resp)
+
+		_, err = w.Write(resp)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+
+			return
+		}
 	default:
+		w.WriteHeader(http.StatusInternalServerError)
+	}
+}
+
+func writeResponse(w http.ResponseWriter, data interface{}) {
+	res, err := json.Marshal(data)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+
+	_, err = w.Write(res)
+	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 	}
 }
 
 func (h handler) GetByID(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
+
 	param := mux.Vars(r)
 	idParam := param["id"]
 
@@ -74,24 +96,11 @@ func (h handler) GetByID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data, err := h.service.Get(id)
-
 	switch err.(type) {
 	case errors.EntityNotFound:
 		w.WriteHeader(http.StatusNotFound)
 	case nil:
-		res, err := json.Marshal(data)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-
-			return
-		}
-		w.WriteHeader(http.StatusOK)
-
-		_, err = w.Write(res)
-		if err != nil {
-			log.Println("error in writing response")
-		}
-
+		writeResponse(w, data)
 	default:
 		w.WriteHeader(http.StatusInternalServerError)
 	}

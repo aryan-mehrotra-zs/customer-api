@@ -26,6 +26,8 @@ func (m mockService) Get(id int) (models.Customer, error) {
 		return models.Customer{}, errors.InvalidParam{}
 	case "3":
 		return models.Customer{}, errors.EntityNotFound{}
+	case "4":
+		return models.Customer{}, errors.DB{}
 	}
 
 	return models.Customer{}, nil
@@ -85,9 +87,13 @@ func TestHandler_Create(t *testing.T) {
 
 		resp := w.Result()
 
-		if resp.StatusCode != tc.statusCode {
+		err := resp.Body.Close()
+		if err != nil {
+			t.Errorf("error in writing response")
+		}
 
-			t.Errorf("[TEST%d] Failed Desc : %v. Got %v\tExpected %v\n", i, tc.desc, resp.StatusCode, tc.statusCode)
+		if resp.StatusCode != tc.statusCode {
+			t.Errorf("\n[TEST %d] Failed. Desc : %v\nGot %v\nExpected %v", i, tc.desc, resp.StatusCode, tc.statusCode)
 		}
 	}
 }
@@ -104,6 +110,7 @@ func TestHandler_GetByID(t *testing.T) {
 		{"entity exists", "1", []byte(`{"id":1,"name":"Aryan","address":"Patna","phone_no":1}`), http.StatusOK},
 		{"invalid id", "0", []byte(``), http.StatusBadRequest},
 		{"entity not found", "3", []byte(``), http.StatusNotFound},
+		{"database connectivity error", "4", []byte(``), http.StatusInternalServerError},
 	}
 	for i, tc := range cases {
 		req := httptest.NewRequest(http.MethodGet, "http://dummy", http.NoBody)
@@ -120,11 +127,23 @@ func TestHandler_GetByID(t *testing.T) {
 		}
 
 		if resp.StatusCode != tc.statusCode {
-			t.Errorf("[TEST%d]Failed. Got %v\tExpected %v\n", i, resp.StatusCode, tc.statusCode)
+			t.Errorf("\n[TEST %d] Failed. Desc : %v\nGot %v\nExpected %v", i, tc.desc, resp.StatusCode, tc.statusCode)
 		}
 
 		if !reflect.DeepEqual(body, tc.resp) {
-			t.Errorf("[TEST%d]Failed. Got %v\tExpected %v\n", i, string(body), string(tc.resp))
+			t.Errorf("\n[TEST %d] Failed. Desc : %v\nGot %v\nExpected %v", i, tc.desc, string(body), string(tc.resp))
 		}
 	}
+}
+
+func TestHandler_writeResponse(t *testing.T) {
+
+	c := make(chan int)
+	w := httptest.NewRecorder()
+	writeResponse(w, c)
+	resp := w.Result()
+	if resp.StatusCode != http.StatusInternalServerError {
+		t.Errorf("\n[TEST] Failed. Desc : Marshal Error\nGot %v\nExpected %v", resp.StatusCode, http.StatusInternalServerError)
+	}
+
 }

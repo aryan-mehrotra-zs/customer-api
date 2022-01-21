@@ -15,13 +15,12 @@ func New(store stores.Store) service {
 }
 
 func (s service) Get(id int) (models.Customer, error) {
-
 	// todo : how to handle error?
 	return s.store.Get(id)
 }
 
 func (s service) Create(c models.Customer) (models.Customer, error) {
-	//todo : call store get and check if correct values are inserted
+	// todo : call store get and check if correct values are inserted
 	return s.store.Create(c)
 }
 

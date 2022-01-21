@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"log"
 	"net/http"
-	"time"
 
 	"github.com/gorilla/mux"
 
@@ -14,7 +13,6 @@ import (
 )
 
 func main() {
-
 	db := drivers.ConnectToSQL()
 	defer func(db *sql.DB) {
 		err := db.Close()
@@ -34,10 +32,8 @@ func main() {
 	r.HandleFunc("/customers/{id}", h.UpdateByID).Methods(http.MethodPut)
 
 	srv := &http.Server{
-		Handler:      r,
-		Addr:         "127.0.0.1:8000",
-		WriteTimeout: 15 * time.Second,
-		ReadTimeout:  15 * time.Second,
+		Handler: r,
+		Addr:    "127.0.0.1:8000",
 	}
 
 	log.Fatalln(srv.ListenAndServe())
