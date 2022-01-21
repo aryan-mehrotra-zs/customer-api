@@ -1,7 +1,6 @@
 package main
 
 import (
-	"database/sql"
 	"log"
 	"net/http"
 
@@ -14,12 +13,12 @@ import (
 
 func main() {
 	db := drivers.ConnectToSQL()
-	defer func(db *sql.DB) {
+	defer func() {
 		err := db.Close()
 		if err != nil {
 			return
 		}
-	}(db)
+	}()
 
 	stores := store.New(db)
 	h := handler.New(stores)

@@ -16,10 +16,10 @@ import (
 )
 
 type handler struct {
-	service services.Service
+	service services.Customer
 }
 
-func New(service services.Service) handler {
+func New(service services.Customer) handler {
 	return handler{service: service}
 }
 
@@ -52,6 +52,8 @@ func (h handler) Create(w http.ResponseWriter, r *http.Request) {
 		resp, err := json.Marshal(customer)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
+
+			return
 		}
 
 		w.WriteHeader(http.StatusCreated)
@@ -115,9 +117,9 @@ func (h handler) UpdateByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var c models.Customer
+	var customer models.Customer
 
-	err = json.Unmarshal(body, &c)
+	err = json.Unmarshal(body, &customer)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 
@@ -127,17 +129,17 @@ func (h handler) UpdateByID(w http.ResponseWriter, r *http.Request) {
 	param := mux.Vars(r)
 	idParam := param["id"]
 
-	c.ID, err = strconv.Atoi(idParam)
+	customer.ID, err = strconv.Atoi(idParam)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 	}
 
-	err = h.service.Update(c)
+	customer, err = h.service.Update(customer)
 	switch err.(type) {
 	case errors.EntityNotFound:
 		w.WriteHeader(http.StatusNotFound)
 	case nil:
-		w.WriteHeader(http.StatusOK)
+		writeResponse(w, customer)
 	default:
 		w.WriteHeader(http.StatusInternalServerError)
 	}

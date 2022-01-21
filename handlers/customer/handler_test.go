@@ -6,74 +6,10 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"reflect"
-	"strconv"
 	"testing"
 
 	"github.com/gorilla/mux"
-
-	"github.com/amehrotra/customer-api/errors"
-	"github.com/amehrotra/customer-api/models"
 )
-
-type mockService struct {
-}
-
-func (m mockService) Get(id int) (models.Customer, error) {
-	switch strconv.Itoa(id) {
-	case "1":
-		return models.Customer{ID: 1, Name: "Aryan", Address: "Patna", PhoneNo: 1}, nil
-	case "0":
-		return models.Customer{}, errors.InvalidParam{}
-	case "3":
-		return models.Customer{}, errors.EntityNotFound{}
-	case "4":
-		return models.Customer{}, errors.DB{}
-	}
-
-	return models.Customer{}, nil
-}
-
-func (m mockService) Create(c models.Customer) (models.Customer, error) {
-	switch c.Name {
-	case "Umang":
-		return models.Customer{}, errors.EntityAlreadyExists{}
-	case "Aryan":
-		c.ID = 1
-		return c, nil
-	case "Ruchit":
-		return models.Customer{}, errors.MissingParam{}
-	case "Aakanksha":
-		return models.Customer{}, errors.DB{}
-	default:
-		return models.Customer{}, nil
-	}
-}
-
-func (m mockService) Update(c models.Customer) error {
-	return nil
-}
-func (m mockService) Delete(id int) error {
-	return nil
-}
-
-type mockReader struct{}
-
-func (m mockReader) Read(p []byte) (n int, err error) {
-	return 0, errors.InvalidParam{}
-}
-
-type mockResponseWriter struct {
-}
-
-func (m mockResponseWriter) Header() http.Header {
-	return nil
-}
-func (m mockResponseWriter) Write([]byte) (int, error) {
-	return 0, errors.DB{}
-}
-func (m mockResponseWriter) WriteHeader(statusCode int) {
-
-}
 
 func TestHandler_Create(t *testing.T) {
 	h := New(mockService{})
@@ -87,9 +23,9 @@ func TestHandler_Create(t *testing.T) {
 		{"entity already exists", bytes.NewReader([]byte(`{"id":4,"name":"Umang"}`)), nil, http.StatusOK},
 		{"create new entity", bytes.NewReader([]byte(`{"name":"Aryan"}`)), nil, http.StatusCreated},
 		{"missing or invalid parameter", bytes.NewReader([]byte(`{"name":"Ruchit"}`)), nil, http.StatusBadRequest},
-		{"internal server error", bytes.NewReader([]byte(`{"name":"Aakanksha"}`)), nil, http.StatusInternalServerError},
+		{"default case : internal server error", bytes.NewReader([]byte(`{"name":"Aakanksha"}`)), nil, http.StatusInternalServerError},
 		{"unmarshal error", bytes.NewReader([]byte(`invalid body`)), nil, http.StatusBadRequest},
-		{"bind error", mockReader{}, nil, http.StatusInternalServerError},
+		{"unable to read body", mockReader{}, nil, http.StatusInternalServerError},
 	}
 
 	for i, tc := range cases {
@@ -125,6 +61,7 @@ func TestHandler_GetByID(t *testing.T) {
 		{"entity not found", "3", []byte(``), http.StatusNotFound},
 		{"database connectivity error", "4", []byte(``), http.StatusInternalServerError},
 	}
+
 	for i, tc := range cases {
 		req := httptest.NewRequest(http.MethodGet, "http://dummy", http.NoBody)
 		r := mux.SetURLVars(req, map[string]string{"id": tc.id})
@@ -157,7 +94,7 @@ func TestHandler_writeResponse(t *testing.T) {
 		statusCode int
 	}{
 		{"marshal error", make(chan int), httptest.NewRecorder(), http.StatusInternalServerError},
-		{"response writer error", []byte(`{"id":1,"name":"Aryan","address":"Patna","phone_no":1}`), mockResponseWriter{}, http.StatusInternalServerError},
+		{"response writer error", []byte(`{"id":1,"name":"Aryan","address":"Patna","phone_no":1}`), mockResponseWriter{}, 0},
 	}
 
 	for i, tc := range cases {
@@ -166,8 +103,83 @@ func TestHandler_writeResponse(t *testing.T) {
 		if w, ok := tc.w.(*httptest.ResponseRecorder); ok {
 			resp := w.Result()
 			if resp.StatusCode != tc.statusCode {
-				t.Errorf("\n[TEST %v] Failed. Desc : %v\nGot %v\nExpected %v", i, tc.desc, resp.StatusCode, http.StatusInternalServerError)
+				t.Errorf("\n[TEST %v] Failed. Desc : %v\nGot %v\nExpected %v", i, tc.desc, resp.StatusCode, tc.statusCode)
 			}
+		}
+	}
+}
+func TestHandler_UpdateByID(t *testing.T) {
+	h := New(mockService{})
+
+	cases := []struct {
+		desc       string
+		id         string
+		body       io.Reader
+		statusCode int
+		resp       []byte
+	}{
+		{"entity updated successfully", "1", bytes.NewReader([]byte(`{"name":"aakanksha","address":"Patna","phone_no":1}`)), http.StatusOK, []byte(`{"id":1,"name":"aakanksha","address":"Patna","phone_no":1}`)},
+		{"entity not found", "10", bytes.NewReader([]byte(`{"name":"Aryan"}`)), http.StatusNotFound, []byte("")},
+		{"server error", "99", bytes.NewReader([]byte(`{"name":"Umang"}`)), http.StatusInternalServerError, []byte("")},
+		{"invalid id", "abc", bytes.NewReader([]byte(`{"name":"Umang"}`)), http.StatusBadRequest, []byte("")},
+		{"unmarshal error", "10", bytes.NewReader([]byte(`invalid body"}`)), http.StatusBadRequest, []byte("")},
+		{"body read error", "10", mockReader{}, http.StatusInternalServerError, []byte("")},
+	}
+
+	for i, tc := range cases {
+		req := httptest.NewRequest(http.MethodPut, "http://dummy", tc.body)
+		r := mux.SetURLVars(req, map[string]string{"id": tc.id})
+		w := httptest.NewRecorder()
+
+		h.UpdateByID(w, r)
+
+		resp := w.Result()
+
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			t.Errorf("cannot read resp: %v", err)
+		}
+
+		err = resp.Body.Close()
+		if err != nil {
+			t.Errorf("error in closing body")
+		}
+
+		if resp.StatusCode != tc.statusCode {
+			t.Errorf("\n[TEST %d] Failed. Desc : %v\nGot %v\nExpected %v", i, tc.desc, resp.StatusCode, tc.statusCode)
+		}
+
+		if !reflect.DeepEqual(body, tc.resp) {
+			t.Errorf("\n[TEST %d] Failed. Desc : %v\nGot %v\nExpected %v", i, tc.desc, string(body), string(tc.resp))
+		}
+	}
+}
+
+func TestHandler_DeleteByID(t *testing.T) {
+	h := New(mockService{})
+
+	cases := []struct {
+		desc       string
+		id         string
+		statusCode int
+	}{
+		{"delete successful", "1", http.StatusNoContent},
+		{"entity not found", "10", http.StatusNotFound},
+		{"server error", "11", http.StatusInternalServerError},
+		{"invalid id", "abc", http.StatusBadRequest},
+	}
+
+	for i, tc := range cases {
+		req := httptest.NewRequest(http.MethodDelete, "http://customer", nil)
+		r := mux.SetURLVars(req, map[string]string{"id": tc.id})
+		w := httptest.NewRecorder()
+
+		h.DeleteByID(w, r)
+
+		resp := w.Result()
+
+		if resp.StatusCode != tc.statusCode {
+			t.Errorf("\n[TEST %d] Failed. Desc : %v\nGot %v\nExpected %v", i, tc.desc, resp.StatusCode, tc.statusCode)
 		}
 	}
 }
