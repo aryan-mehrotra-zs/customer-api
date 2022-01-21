@@ -18,6 +18,7 @@ type handler struct {
 	service services.Customer
 }
 
+// nolint:revive // handler should be unexported
 func New(service services.Customer) handler {
 	return handler{service: service}
 }

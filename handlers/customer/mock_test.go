@@ -51,9 +51,9 @@ func (m mockService) Update(c models.Customer) (models.Customer, error) {
 		return models.Customer{}, errors.EntityNotFound{}
 	default:
 		return models.Customer{}, errors.Error("some error")
-
 	}
 }
+
 func (m mockService) Delete(id int) error {
 	switch id {
 	case 1:

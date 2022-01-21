@@ -31,7 +31,8 @@ func TestHandler_Create(t *testing.T) {
 		statusCode int
 	}{
 		{"entity already exists", bytes.NewReader([]byte(`{"id":4,"name":"Umang"}`)), []byte(``), http.StatusOK},
-		{"create new entity", bytes.NewReader([]byte(`{"name":"Aryan","address":"Patna","phone_no":1}`)), []byte(`{"id":1,"name":"Aryan","address":"Patna","phone_no":1}`), http.StatusCreated},
+		{"create new entity", bytes.NewReader([]byte(`{"name":"Aryan","address":"Patna","phone_no":1}`)),
+			[]byte(`{"id":1,"name":"Aryan","address":"Patna","phone_no":1}`), http.StatusCreated},
 		{"missing or invalid parameter", bytes.NewReader([]byte(`{"name":"Ruchit"}`)), []byte(``), http.StatusBadRequest},
 		{"default case : internal server error", bytes.NewReader([]byte(`{"name":"Aakanksha"}`)), []byte(``), http.StatusInternalServerError},
 		{"unmarshal error", bytes.NewReader([]byte(`invalid body`)), []byte(``), http.StatusBadRequest},
@@ -60,6 +61,7 @@ func TestHandler_Create(t *testing.T) {
 	}
 }
 
+// nolint:dupl // cannot combine tests for Get and Update
 func TestHandler_GetByID(t *testing.T) {
 	cases := []struct {
 		desc       string
@@ -95,6 +97,7 @@ func TestHandler_GetByID(t *testing.T) {
 	}
 }
 
+// nolint:dupl // cannot combine tests for Get and Update
 func TestHandler_UpdateByID(t *testing.T) {
 	cases := []struct {
 		desc       string
@@ -103,7 +106,8 @@ func TestHandler_UpdateByID(t *testing.T) {
 		statusCode int
 		resp       []byte
 	}{
-		{"entity updated successfully", "1", bytes.NewReader([]byte(`{"name":"aakanksha","address":"Patna","phone_no":1}`)), http.StatusOK, []byte(`{"id":1,"name":"aakanksha","address":"Patna","phone_no":1}`)},
+		{"entity updated successfully", "1", bytes.NewReader([]byte(`{"name":"aakanksha","address":"Patna","phone_no":1}`)),
+			http.StatusOK, []byte(`{"id":1,"name":"aakanksha","address":"Patna","phone_no":1}`)},
 		{"entity not found", "10", bytes.NewReader([]byte(`{"name":"Aryan"}`)), http.StatusNotFound, []byte(``)},
 		{"server error", "99", bytes.NewReader([]byte(`{"name":"Umang"}`)), http.StatusInternalServerError, []byte(``)},
 		{"invalid id", "abc", bytes.NewReader([]byte(`{"name":"Umang"}`)), http.StatusBadRequest, []byte(``)},
@@ -155,6 +159,8 @@ func TestHandler_DeleteByID(t *testing.T) {
 		if resp.StatusCode != tc.statusCode {
 			t.Errorf("\n[TEST %d] Failed. Desc : %v\nGot %v\nExpected %v", i, tc.desc, resp.StatusCode, tc.statusCode)
 		}
+
+		resp.Body.Close()
 	}
 }
 
@@ -166,6 +172,8 @@ func TestHandler_writeResponseMarshalError(t *testing.T) {
 	writeResponseBody(w, http.StatusOK, data)
 
 	resp := w.Result()
+	defer resp.Body.Close()
+
 	if resp.StatusCode != expectedStatusCode {
 		t.Errorf("\n[TEST] Failed. Desc : Marshal Error \nGot %v\nExpected %v", resp.StatusCode, http.StatusInternalServerError)
 	}
@@ -176,6 +184,7 @@ func TestHandler_writeResponseWriteError(t *testing.T) {
 	w := mockResponseWriter{}
 
 	var b bytes.Buffer
+
 	log.SetOutput(&b)
 
 	writeResponseBody(w, http.StatusOK, data)
@@ -191,7 +200,7 @@ func getResponseBody(resp *http.Response) ([]byte, error) {
 		return nil, err
 	}
 
-	if err = resp.Body.Close(); err != nil {
+	if err := resp.Body.Close(); err != nil {
 		return nil, err
 	}
 
