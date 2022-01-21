@@ -23,8 +23,6 @@ func New(service services.Customer) handler {
 }
 
 func (h handler) Create(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
 	var customer models.Customer
 
 	body, err := io.ReadAll(r.Body)
@@ -45,14 +43,9 @@ func (h handler) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h handler) GetByID(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
-	param := mux.Vars(r)
-	idParam := param["id"]
-
-	id, err := strconv.Atoi(idParam)
-	if err != nil || id <= 0 {
-		w.WriteHeader(http.StatusBadRequest)
+	id, err := getID(r)
+	if err != nil {
+		setStatusCode(w, err, r.Method, nil)
 
 		return
 	}
@@ -79,12 +72,11 @@ func (h handler) UpdateByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	param := mux.Vars(r)
-	idParam := param["id"]
-
-	customer.ID, err = strconv.Atoi(idParam)
+	customer.ID, err = getID(r)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		setStatusCode(w, err, r.Method, nil)
+
+		return
 	}
 
 	customer, err = h.service.Update(customer)
@@ -93,12 +85,9 @@ func (h handler) UpdateByID(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h handler) DeleteByID(w http.ResponseWriter, r *http.Request) {
-	param := mux.Vars(r)
-	idParam := param["id"]
-
-	id, err := strconv.Atoi(idParam)
-	if err != nil || id <= 0 {
-		w.WriteHeader(http.StatusBadRequest)
+	id, err := getID(r)
+	if err != nil {
+		setStatusCode(w, err, r.Method, nil)
 
 		return
 	}
@@ -124,6 +113,8 @@ func setStatusCode(w http.ResponseWriter, err error, method string, data interfa
 }
 
 func writeSuccessResponse(w http.ResponseWriter, method string, data interface{}) {
+	w.Header().Set("Content-Type", "application/json")
+
 	switch method {
 	case http.MethodPost:
 		writeResponseBody(w, http.StatusCreated, data)
@@ -148,4 +139,16 @@ func writeResponseBody(w http.ResponseWriter, statusCode int, data interface{}) 
 	if err != nil {
 		log.Printf("error in writing response %v", err)
 	}
+}
+
+func getID(r *http.Request) (int, error) {
+	param := mux.Vars(r)
+	idParam := param["id"]
+
+	id, err := strconv.Atoi(idParam)
+	if err != nil || id <= 0 {
+		return 0, errors.InvalidParam{Param: []string{"id"}}
+	}
+
+	return id, nil
 }
