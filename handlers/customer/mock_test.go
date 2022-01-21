@@ -2,24 +2,22 @@ package customer
 
 import (
 	"net/http"
-	"strconv"
 
 	"github.com/amehrotra/customer-api/errors"
 	"github.com/amehrotra/customer-api/models"
 )
 
-type mockService struct {
-}
+type mockService struct{}
 
 func (m mockService) Get(id int) (models.Customer, error) {
-	switch strconv.Itoa(id) {
-	case "1":
+	switch id {
+	case 1:
 		return models.Customer{ID: 1, Name: "Aryan", Address: "Patna", PhoneNo: 1}, nil
-	case "0":
+	case 0:
 		return models.Customer{}, errors.InvalidParam{}
-	case "3":
+	case 3:
 		return models.Customer{}, errors.EntityNotFound{}
-	case "4":
+	case 4:
 		return models.Customer{}, errors.Error("some error")
 	}
 
