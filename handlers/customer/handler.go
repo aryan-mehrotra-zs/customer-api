@@ -7,10 +7,9 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/amehrotra/customer-api/errors"
-
 	"github.com/gorilla/mux"
 
+	"github.com/amehrotra/customer-api/errors"
 	"github.com/amehrotra/customer-api/models"
 	"github.com/amehrotra/customer-api/services"
 )
@@ -42,47 +41,7 @@ func (h handler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	customer, err = h.service.Create(customer)
-	switch err.(type) {
-	case errors.EntityAlreadyExists:
-		w.WriteHeader(http.StatusOK)
-	case errors.InvalidParam, errors.MissingParam:
-		w.WriteHeader(http.StatusBadRequest)
-	case nil:
-		resp, err := json.Marshal(customer)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-
-			return
-		}
-
-		w.WriteHeader(http.StatusCreated)
-
-		_, err = w.Write(resp)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-
-			return
-		}
-	default:
-		w.WriteHeader(http.StatusInternalServerError)
-	}
-}
-
-func writeResponse(w http.ResponseWriter, data interface{}) {
-	res, err := json.Marshal(data)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
-
-	_, err = w.Write(res)
-	if err != nil {
-		log.Println(err)
-	}
+	setStatusCode(w, err, r.Method, customer)
 }
 
 func (h handler) GetByID(w http.ResponseWriter, r *http.Request) {
@@ -98,15 +57,9 @@ func (h handler) GetByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data, err := h.service.Get(id)
-	switch err.(type) {
-	case errors.EntityNotFound:
-		w.WriteHeader(http.StatusNotFound)
-	case nil:
-		writeResponse(w, data)
-	default:
-		w.WriteHeader(http.StatusInternalServerError)
-	}
+	customer, err := h.service.Get(id)
+
+	setStatusCode(w, err, r.Method, customer)
 }
 
 func (h handler) UpdateByID(w http.ResponseWriter, r *http.Request) {
@@ -135,14 +88,8 @@ func (h handler) UpdateByID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	customer, err = h.service.Update(customer)
-	switch err.(type) {
-	case errors.EntityNotFound:
-		w.WriteHeader(http.StatusNotFound)
-	case nil:
-		writeResponse(w, customer)
-	default:
-		w.WriteHeader(http.StatusInternalServerError)
-	}
+
+	setStatusCode(w, err, r.Method, customer)
 }
 
 func (h handler) DeleteByID(w http.ResponseWriter, r *http.Request) {
@@ -158,12 +105,47 @@ func (h handler) DeleteByID(w http.ResponseWriter, r *http.Request) {
 
 	err = h.service.Delete(id)
 
+	setStatusCode(w, err, r.Method, nil)
+}
+
+func setStatusCode(w http.ResponseWriter, err error, method string, data interface{}) {
 	switch err.(type) {
+	case errors.EntityAlreadyExists:
+		w.WriteHeader(http.StatusOK)
+	case errors.InvalidParam, errors.MissingParam:
+		w.WriteHeader(http.StatusBadRequest)
 	case errors.EntityNotFound:
 		w.WriteHeader(http.StatusNotFound)
 	case nil:
-		w.WriteHeader(http.StatusNoContent)
+		writeSuccessResponse(w, method, data)
 	default:
 		w.WriteHeader(http.StatusInternalServerError)
+	}
+}
+
+func writeSuccessResponse(w http.ResponseWriter, method string, data interface{}) {
+	switch method {
+	case http.MethodPost:
+		writeResponseBody(w, http.StatusCreated, data)
+	case http.MethodGet, http.MethodPut:
+		writeResponseBody(w, http.StatusOK, data)
+	case http.MethodDelete:
+		w.WriteHeader(http.StatusNoContent)
+	}
+}
+
+func writeResponseBody(w http.ResponseWriter, statusCode int, data interface{}) {
+	res, err := json.Marshal(data)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+
+		return
+	}
+
+	w.WriteHeader(statusCode)
+
+	_, err = w.Write(res)
+	if err != nil {
+		log.Printf("error in writing response %v", err)
 	}
 }
