@@ -3,6 +3,7 @@ package customer
 import (
 	"encoding/json"
 	"io"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -78,7 +79,7 @@ func writeResponse(w http.ResponseWriter, data interface{}) {
 
 	_, err = w.Write(res)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		log.Println(err)
 	}
 }
 

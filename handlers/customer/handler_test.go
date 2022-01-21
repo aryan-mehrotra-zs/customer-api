@@ -62,6 +62,19 @@ func (m mockReader) Read(p []byte) (n int, err error) {
 	return 0, errors.InvalidParam{}
 }
 
+type mockResponseWriter struct {
+}
+
+func (m mockResponseWriter) Header() http.Header {
+	return nil
+}
+func (m mockResponseWriter) Write([]byte) (int, error) {
+	return 0, errors.DB{}
+}
+func (m mockResponseWriter) WriteHeader(statusCode int) {
+
+}
+
 func TestHandler_Create(t *testing.T) {
 	h := New(mockService{})
 
@@ -137,13 +150,24 @@ func TestHandler_GetByID(t *testing.T) {
 }
 
 func TestHandler_writeResponse(t *testing.T) {
-
-	c := make(chan int)
-	w := httptest.NewRecorder()
-	writeResponse(w, c)
-	resp := w.Result()
-	if resp.StatusCode != http.StatusInternalServerError {
-		t.Errorf("\n[TEST] Failed. Desc : Marshal Error\nGot %v\nExpected %v", resp.StatusCode, http.StatusInternalServerError)
+	cases := []struct {
+		desc       string
+		data       interface{}
+		w          http.ResponseWriter
+		statusCode int
+	}{
+		{"marshal error", make(chan int), httptest.NewRecorder(), http.StatusInternalServerError},
+		{"response writer error", []byte(`{"id":1,"name":"Aryan","address":"Patna","phone_no":1}`), mockResponseWriter{}, http.StatusInternalServerError},
 	}
 
+	for i, tc := range cases {
+		writeResponse(tc.w, tc.data)
+
+		if w, ok := tc.w.(*httptest.ResponseRecorder); ok {
+			resp := w.Result()
+			if resp.StatusCode != tc.statusCode {
+				t.Errorf("\n[TEST %v] Failed. Desc : %v\nGot %v\nExpected %v", i, tc.desc, resp.StatusCode, http.StatusInternalServerError)
+			}
+		}
+	}
 }
