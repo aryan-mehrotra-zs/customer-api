@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"io"
 	"log"
-	"math"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
@@ -189,7 +188,7 @@ func TestHandler_writeResponse(t *testing.T) {
 }
 
 func TestHandler_writeResponseMarshalError(t *testing.T) {
-	data := math.Inf(1)
+	data := complex(2, 1)
 	w := httptest.NewRecorder()
 	statusCode := http.StatusInternalServerError
 
