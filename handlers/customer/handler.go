@@ -28,7 +28,7 @@ func (h handler) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h handler) GetByID(w http.ResponseWriter, r *http.Request) {
-	id, err := getId(w, r)
+	id, err := getId(r)
 	if err != nil {
 		setStatusCode(w, r, err, nil)
 
@@ -48,7 +48,7 @@ func (h handler) UpdateByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	customer.ID, err = getId(w, r)
+	customer.ID, err = getId(r)
 	if err != nil {
 		setStatusCode(w, r, err, nil)
 
@@ -61,7 +61,7 @@ func (h handler) UpdateByID(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h handler) DeleteByID(w http.ResponseWriter, r *http.Request) {
-	id, err := getId(w, r)
+	id, err := getId(r)
 	if err != nil {
 		setStatusCode(w, r, err, nil)
 

@@ -75,7 +75,7 @@ func writeResponseBody(w http.ResponseWriter, status int, data interface{}) {
 	}
 }
 
-func getId(w http.ResponseWriter, r *http.Request) (int, error) {
+func getId(r *http.Request) (int, error) {
 	param := mux.Vars(r)
 	idParam := param["id"]
 
