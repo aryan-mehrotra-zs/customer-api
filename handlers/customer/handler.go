@@ -8,7 +8,7 @@ import (
 	"strconv"
 
 	"github.com/gorilla/mux"
-	
+
 	"github.com/amehrotra/customer-api/errors"
 	"github.com/amehrotra/customer-api/models"
 	"github.com/amehrotra/customer-api/services"
@@ -133,7 +133,7 @@ func (h handler) UpdateByID(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 	}
 
-	customer, err = h.service.Update(customer)
+	err = h.service.Update(customer)
 	switch err.(type) {
 	case errors.EntityNotFound:
 		w.WriteHeader(http.StatusNotFound)

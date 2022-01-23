@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/amehrotra/customer-api/errors"
 	"github.com/amehrotra/customer-api/models"
 )
 
@@ -48,12 +49,12 @@ func (s store) Delete(id int) error {
 func (s store) Update(c models.Customer) error {
 	query := createPutQuery(c.ID, c)
 	if query == "" {
-		return nil
+		return errors.InvalidParam{}
 	}
 
 	_, err := s.db.Exec(query)
 	if err != nil {
-		return err
+		return errors.EntityNotFound{}
 	}
 
 	return nil

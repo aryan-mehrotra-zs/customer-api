@@ -42,15 +42,15 @@ func (m mockService) Create(c models.Customer) (models.Customer, error) {
 	}
 }
 
-func (m mockService) Update(c models.Customer) (models.Customer, error) {
+func (m mockService) Update(c models.Customer) error {
 	switch c.Name {
 	case "aakanksha":
 		c.ID = 1
-		return c, nil
+		return nil
 	case "Aryan":
-		return models.Customer{}, errors.EntityNotFound{}
+		return errors.EntityNotFound{}
 	default:
-		return models.Customer{}, errors.DB{}
+		return errors.DB{}
 
 	}
 }

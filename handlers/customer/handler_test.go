@@ -111,14 +111,13 @@ func TestHandler_UpdateByID(t *testing.T) {
 		id         string
 		body       io.Reader
 		statusCode int
-		resp       []byte
 	}{
-		{"entity updated successfully", "1", bytes.NewReader([]byte(`{"name":"aakanksha","address":"Patna","phone_no":1}`)), http.StatusOK, []byte(`{"id":1,"name":"aakanksha","address":"Patna","phone_no":1}`)},
-		{"entity not found", "10", bytes.NewReader([]byte(`{"name":"Aryan"}`)), http.StatusNotFound, []byte("")},
-		{"server error", "99", bytes.NewReader([]byte(`{"name":"Umang"}`)), http.StatusInternalServerError, []byte("")},
-		{"invalid id", "abc", bytes.NewReader([]byte(`{"name":"Umang"}`)), http.StatusBadRequest, []byte("")},
-		{"unmarshal error", "10", bytes.NewReader([]byte(`invalid body"}`)), http.StatusBadRequest, []byte("")},
-		{"body read error", "10", mockReader{}, http.StatusInternalServerError, []byte("")},
+		{"entity updated successfully", "1", bytes.NewReader([]byte(`{"name":"aakanksha","address":"Patna","phone_no":1}`)), http.StatusOK},
+		{"entity not found", "10", bytes.NewReader([]byte(`{"name":"Aryan"}`)), http.StatusNotFound},
+		{"server error", "99", bytes.NewReader([]byte(`{"name":"Umang"}`)), http.StatusInternalServerError},
+		{"invalid id", "abc", bytes.NewReader([]byte(`{"name":"Umang"}`)), http.StatusBadRequest},
+		{"unmarshal error", "10", bytes.NewReader([]byte(`invalid body"}`)), http.StatusBadRequest},
+		{"body read error", "10", mockReader{}, http.StatusInternalServerError},
 	}
 
 	for i, tc := range cases {
@@ -130,12 +129,7 @@ func TestHandler_UpdateByID(t *testing.T) {
 
 		resp := w.Result()
 
-		body, err := io.ReadAll(resp.Body)
-		if err != nil {
-			t.Errorf("cannot read resp: %v", err)
-		}
-
-		err = resp.Body.Close()
+		err := resp.Body.Close()
 		if err != nil {
 			t.Errorf("error in closing body")
 		}
@@ -144,9 +138,6 @@ func TestHandler_UpdateByID(t *testing.T) {
 			t.Errorf("\n[TEST %d] Failed. Desc : %v\nGot %v\nExpected %v", i, tc.desc, resp.StatusCode, tc.statusCode)
 		}
 
-		if !reflect.DeepEqual(body, tc.resp) {
-			t.Errorf("\n[TEST %d] Failed. Desc : %v\nGot %v\nExpected %v", i, tc.desc, string(body), string(tc.resp))
-		}
 	}
 }
 
