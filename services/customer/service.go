@@ -10,18 +10,15 @@ type service struct {
 	store stores.Store
 }
 
-// New fixme why it is not being used
 func New(store stores.Store) services.Customer {
 	return service{store: store}
 }
 
 func (s service) Get(id int) (models.Customer, error) {
-	// todo : how to handle error?
 	return s.store.Get(id)
 }
 
 func (s service) Create(c models.Customer) (models.Customer, error) {
-	// todo : call store get and check if correct values are inserted
 	return s.store.Create(c)
 }
 
