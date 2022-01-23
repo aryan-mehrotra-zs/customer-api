@@ -7,10 +7,9 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/amehrotra/customer-api/errors"
-
 	"github.com/gorilla/mux"
-
+	
+	"github.com/amehrotra/customer-api/errors"
 	"github.com/amehrotra/customer-api/models"
 	"github.com/amehrotra/customer-api/services"
 )
