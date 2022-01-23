@@ -8,11 +8,16 @@ import (
 
 	"github.com/amehrotra/customer-api/drivers"
 	handler "github.com/amehrotra/customer-api/handlers/customer"
+	service "github.com/amehrotra/customer-api/services/customer"
 	store "github.com/amehrotra/customer-api/stores/customer"
 )
 
 func main() {
-	db := drivers.ConnectToSQL()
+	db, err := drivers.ConnectToSQL()
+	if err != nil {
+		return
+	}
+
 	defer func() {
 		err := db.Close()
 		if err != nil {
@@ -21,7 +26,8 @@ func main() {
 	}()
 
 	stores := store.New(db)
-	h := handler.New(stores)
+	services := service.New(stores)
+	h := handler.New(services)
 
 	r := mux.NewRouter()
 
