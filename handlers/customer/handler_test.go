@@ -98,7 +98,8 @@ func TestHandler_UpdateByID(t *testing.T) {
 		statusCode int
 		resp       []byte
 	}{
-		{"entity updated successfully", "1", bytes.NewReader([]byte(`{"name":"aakanksha","address":"Patna","phone_no":1}`)), http.StatusOK, []byte(`{"id":1,"name":"aakanksha","address":"Patna","phone_no":1}`)},
+		{"entity updated successfully", "1", bytes.NewReader([]byte(`{"name":"aakanksha","address":"Patna","phone_no":1}`)),
+			http.StatusOK, []byte(`{"id":1,"name":"aakanksha","address":"Patna","phone_no":1}`)},
 		{"entity not found", "10", bytes.NewReader([]byte(`{"name":"Aryan"}`)), http.StatusNotFound, []byte("")},
 		{"server error", "99", bytes.NewReader([]byte(`{"name":"Umang"}`)), http.StatusInternalServerError, []byte("")},
 		{"invalid id", "abc", bytes.NewReader([]byte(`{"name":"Umang"}`)), http.StatusBadRequest, []byte("")},
@@ -204,6 +205,7 @@ func TestHandler_writeResponseWriteError(t *testing.T) {
 	w := mockResponseWriter{}
 
 	var b bytes.Buffer
+
 	log.SetOutput(&b)
 
 	writeResponse(w, data)

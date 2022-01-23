@@ -1,16 +1,8 @@
 package customer
 
 import (
-	"encoding/json"
-	"io"
 	"net/http"
-	"strconv"
 
-	"github.com/amehrotra/customer-api/errors"
-
-	"github.com/gorilla/mux"
-
-	"github.com/amehrotra/customer-api/models"
 	"github.com/amehrotra/customer-api/services"
 )
 
@@ -23,7 +15,7 @@ func New(service services.Customer) handler {
 }
 
 func (h handler) Create(w http.ResponseWriter, r *http.Request) {
-	customer, err := getData(w, r)
+	customer, err := getData(r)
 	if err != nil {
 		setStatusCode(w, r, err, customer)
 
@@ -33,11 +25,9 @@ func (h handler) Create(w http.ResponseWriter, r *http.Request) {
 	customer, err = h.service.Create(customer)
 
 	setStatusCode(w, r, err, customer)
-
 }
 
 func (h handler) GetByID(w http.ResponseWriter, r *http.Request) {
-
 	id, err := getId(w, r)
 	if err != nil {
 		setStatusCode(w, r, err, nil)
@@ -48,64 +38,37 @@ func (h handler) GetByID(w http.ResponseWriter, r *http.Request) {
 	customer, err := h.service.Get(id)
 
 	setStatusCode(w, r, err, customer)
-
 }
 
 func (h handler) UpdateByID(w http.ResponseWriter, r *http.Request) {
-	body, err := io.ReadAll(r.Body)
+	customer, err := getData(r)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		setStatusCode(w, r, err, nil)
 
 		return
 	}
 
-	var customer models.Customer
-
-	err = json.Unmarshal(body, &customer)
+	customer.ID, err = getId(w, r)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		setStatusCode(w, r, err, nil)
 
 		return
-	}
-
-	param := mux.Vars(r)
-	idParam := param["id"]
-
-	customer.ID, err = strconv.Atoi(idParam)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
 	}
 
 	customer, err = h.service.Update(customer)
-	switch err.(type) {
-	case errors.EntityNotFound:
-		w.WriteHeader(http.StatusNotFound)
-	case nil:
-		writeResponse(w, customer)
-	default:
-		w.WriteHeader(http.StatusInternalServerError)
-	}
+
+	setStatusCode(w, r, err, customer)
 }
 
 func (h handler) DeleteByID(w http.ResponseWriter, r *http.Request) {
-	param := mux.Vars(r)
-	idParam := param["id"]
-
-	id, err := strconv.Atoi(idParam)
-	if err != nil || id <= 0 {
-		w.WriteHeader(http.StatusBadRequest)
+	id, err := getId(w, r)
+	if err != nil {
+		setStatusCode(w, r, err, nil)
 
 		return
 	}
 
 	err = h.service.Delete(id)
 
-	switch err.(type) {
-	case errors.EntityNotFound:
-		w.WriteHeader(http.StatusNotFound)
-	case nil:
-		w.WriteHeader(http.StatusNoContent)
-	default:
-		w.WriteHeader(http.StatusInternalServerError)
-	}
+	setStatusCode(w, r, err, nil)
 }

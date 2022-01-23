@@ -13,7 +13,9 @@ import (
 	"github.com/amehrotra/customer-api/models"
 )
 
-func getData(w http.ResponseWriter, r *http.Request) (models.Customer, error) {
+// we can pass an interface rather than models.customer and get interface and then it can be used at multiple places
+
+func getData(r *http.Request) (models.Customer, error) {
 	var customer models.Customer
 
 	body, err := io.ReadAll(r.Body)
@@ -57,6 +59,7 @@ func writeSuccessResponse(w http.ResponseWriter, method string, data interface{}
 
 func writeResponseBody(w http.ResponseWriter, status int, data interface{}) {
 	w.Header().Set("Content-Type", "application/json")
+
 	resp, err := json.Marshal(data)
 	if err != nil {
 		setStatusCode(w, nil, err, nil)
@@ -70,7 +73,6 @@ func writeResponseBody(w http.ResponseWriter, status int, data interface{}) {
 	if err != nil {
 		setStatusCode(w, nil, err, nil)
 	}
-
 }
 
 func getId(w http.ResponseWriter, r *http.Request) (int, error) {
