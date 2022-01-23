@@ -8,6 +8,7 @@ import (
 
 	"github.com/amehrotra/customer-api/drivers"
 	handler "github.com/amehrotra/customer-api/handlers/customer"
+	service "github.com/amehrotra/customer-api/services/customer"
 	store "github.com/amehrotra/customer-api/stores/customer"
 )
 
@@ -21,7 +22,8 @@ func main() {
 	}()
 
 	stores := store.New(db)
-	h := handler.New(stores)
+	services := service.New(stores)
+	h := handler.New(services)
 
 	r := mux.NewRouter()
 
